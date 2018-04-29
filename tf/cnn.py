@@ -1,10 +1,12 @@
 import numpy as np
 import tensorflow as tf
 
+def simple():
+    
 def create_network(input_size, kernel_sizes: list, fc_layer_sizes: list):
     conv_layer_params = []
     imw, imh, imd = input_size
-    
+
     last_conv_layer_size = [imw,imh,imd]
 
     for ksize in kernel_sizes:
@@ -14,9 +16,10 @@ def create_network(input_size, kernel_sizes: list, fc_layer_sizes: list):
         wgts = tf.Variable(tf.random_normal([kw, kh, kd, n]))
         bias = tf.Variable(tf.random_normal([n])) # is this correct?
         conv_layer_params.append({'Weights':wgts, 'Bias':bias})
-        # ?? 
-        # maxpooling below will reduce by 2 
-        last_conv_layer_size = [last_conv_layer_size[1]//2,last_conv_layer_size[2]//2,n] 
+        # ??
+        # maxpooling below will reduce by 2
+        # assuming convolutions maintain same activation size (e.g. are padding)
+        last_conv_layer_size = [last_conv_layer_size[1]//2,last_conv_layer_size[2]//2,n]
 
     inp_sz = last_conv_layer_size[0] * last_conv_layer_size[1] * last_conv_layer_size[2]
     fc_layer_params = []
@@ -26,7 +29,7 @@ def create_network(input_size, kernel_sizes: list, fc_layer_sizes: list):
         bias = tf.Variable(tf.random_normal([fcsize]))
         fc_layer_params.append({'Weights':wgts, 'Bias':bias})
         inp_sz = fcsize
-        
+
     # shape None is to allow any batch size?
     x = tf.placeholder(tf.float32, shape=(None,imw,imh,imd))
 
@@ -36,7 +39,7 @@ def create_network(input_size, kernel_sizes: list, fc_layer_sizes: list):
     layers = []
     for cl_params in conv_layer_params:
         # TODO - how to do this without padding?
-        l = tf.nn.conv2d(layer_input, cl_params['Weights'], [1,1,1,1], 'SAME') + cl_params['Bias']     
+        l = tf.nn.conv2d(layer_input, cl_params['Weights'], [1,1,1,1], 'SAME') + cl_params['Bias']
         l = tf.nn.relu(l)
         l = tf.nn.max_pool(l, [1,2,2,1], [1,2,2,1], 'SAME')
         layers.append(l)
@@ -54,14 +57,10 @@ def create_network(input_size, kernel_sizes: list, fc_layer_sizes: list):
         layer_input = l
 
     return x, layer_input
-                           
+
 
 # e.g. 7x7 kernel, 3 channels (?? to match input image?), 64 kernels
 # e.g. 5x5 kernel, 64 channels, 128 kernels?
 # 1024 nodes in fc layer, binary output
 
-x, l = create_network((256,256,3), [(7,7,3,64), (5,5,64,128)], [1024,2]) 
-        
-                           
-                           
-    
+x, l = create_network((256,256,3), [(7,7,3,64), (5,5,64,128)], [1024,2])
